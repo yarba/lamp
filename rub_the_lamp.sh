@@ -23,6 +23,11 @@ ENVFILE="environment_setup.sh"
 XSECDATAREL="2.8.4"
 XSECDATA="gxspl-NuMIsmall.xml.gz"
 
+# service/logs
+TIMESTAMP=`date +%Y-%m-%d-%H-%M-%S`
+LOGNAME=log${TIMESTAMP}
+
+
 # how to use the script
 help()
 {
@@ -310,7 +315,8 @@ fi
 # Build the support packages.
 #
 if [ ! -d GENIESupport ]; then
-  git clone ${GITCHECKOUT}GENIEMC/GENIESupport.git
+#  git clone ${GITCHECKOUT}GENIEMC/GENIESupport.git
+  git clone ${GITCHECKOUT}${USERREPO}/GENIESupport.git
 else
   echo "GENIESupport already installed..."
 fi
@@ -409,7 +415,8 @@ echo -e "  --enable-roomuhistos \\" >> $CONFIGSCRIPT
 echo -e "  --with-optimiz-level=O0 \\" >> $CONFIGSCRIPT
 echo -e "  --with-log4cpp-inc=$LOG4CPP_INC \\" >> $CONFIGSCRIPT
 echo -e "  --with-log4cpp-lib=$LOG4CPP_LIB \\" >> $CONFIGSCRIPT
-echo -e "  >& log.config" >> $CONFIGSCRIPT
+#echo -e "  >& log.config" >> $CONFIGSCRIPT
+echo -e "  >& ${1}.config" >> $CONFIGSCRIPT
 echo -e " " >> $CONFIGSCRIPT
 echo -e "# The following are flags that may be useful to turn on." >> $CONFIGSCRIPT
 echo -e "# GSL is used for some special applications and libxml is" >> $CONFIGSCRIPT
@@ -418,9 +425,11 @@ echo -e "#  --enable-gsl \\" >> $CONFIGSCRIPT
 echo -e "#  --with-libxml2-inc=/usr/include/libxml2 \\" >> $CONFIGSCRIPT
 echo -e "#  --with-libxml2-lib=/usr/lib64 \\" >> $CONFIGSCRIPT
 chmod u+x $CONFIGSCRIPT
-./$CONFIGSCRIPT
+# ./$CONFIGSCRIPT 
+./$CONFIGSCRIPT ${LOGNAME}
 echo "Building GENIE..."
-$MAKE >& log.make
+# $MAKE >& log.make
+$MAKE >& ${LOGNAME}.make
 if [ $? -eq 0 ]; then
   echo "Build successful!"
 else 
@@ -441,7 +450,8 @@ fi
 mypush data
 XSECSPLINEDIR=`pwd`
 if [ ! -f $XSECDATA ]; then
-  wget http://www.hepforge.org/archive/genie/data/$XSECDATAREL/$XSECDATA >& log.datafetch
+#  wget http://www.hepforge.org/archive/genie/data/$XSECDATAREL/$XSECDATA >& log.datafetch
+  wget http://www.hepforge.org/archive/genie/data/$XSECDATAREL/$XSECDATA >& ${LOGNAME}.datafetch
 else
   echo "Cross section data already exists in `pwd`..."
 fi
@@ -462,7 +472,8 @@ fi
 echo "Moving to the genie_runs package area to do the test run..."
 mypush $RUNSPKG 
 gevgen -n 5 -p 14 -t 1000080160 -e 0,10 -r 42 -f 'x*exp(-x)' \
-  --seed 2989819 --cross-sections $XSECSPLINEDIR/$XSECDATA >& run_log.txt
+  --seed 2989819 --cross-sections $XSECSPLINEDIR/$XSECDATA >& run_${LOGNAME}.txt
+#  --seed 2989819 --cross-sections $XSECSPLINEDIR/$XSECDATA >& run_log.txt
 if [ $? -eq 0 ]; then
   echo "Run successful!"
   echo "***********************************************************"
